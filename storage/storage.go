@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -34,8 +35,8 @@ var ctx context.Context = context.Background()
 
 func main() {
 	// Подключение к БД.
-	//pwd := os.Getenv("dbpass")
-	dbpool, err := pgxpool.New(ctx, "postgres://postgres:0773@localhost:5432/taskTracker")
+	pwd := os.Getenv("dbpass")
+	dbpool, err := pgxpool.New(ctx, "postgres://postgres:"+pwd+"@localhost:5432/taskTracker")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -46,88 +47,53 @@ func main() {
 		log.Fatal(err)
 	}
 
-	//Создавать новые задачи,
-	/* 	taskData := []task{
-	   		{author_id: 1, assigned_id: 2, title: "Complete task", content: "complete task fast"},
-	   	}
-	   	err = addTasks(dbpool, taskData)
-	   	if err != nil {
-	   		log.Fatal(err)
-	   	} */
+	//Создать новые задачи,
+	taskData := []task{
+		{author_id: 1, assigned_id: 2, title: "Complete task", content: "complete task fast"},
+	}
+	err = addTasks(dbpool, taskData)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	//Получать список всех задач,
-	/* 	tasks, err := getTasks(dbpool)
-	   	if err != nil {
-	   		log.Fatal(err)
-	   	}
-	   	fmt.Println(tasks) */
+	//Получить список всех задач,
+	tasks, err := getTasks(dbpool)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(tasks)
 
-	//Получать список задач по автору,
-	/* 	tasksByAuthor, err := getTasksByAuthor(dbpool, 1)
-	   	if err != nil {
-	   		log.Fatal(err)
-	   	}
-	   	fmt.Println(tasksByAuthor) */
+	//Получить задачу по id
+	taskById, err := getTaskById(dbpool, 1)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(taskById)
 
-	//Получать список задач по метке,
-	/* 	tasksByLabel, err := getTasksByLabel(dbpool, "Bug")
-	   	if err != nil {
-	   		log.Fatal(err)
-	   	}
-	   	fmt.Println(tasksByLabel) */
+	//Получить список задач по автору,
+	tasksByAuthor, err := getTasksByAuthor(dbpool, 1)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(tasksByAuthor)
 
-	//Обновлять задачу по id,
-	/* 	changedTask := task{author_id: 1, assigned_id: 1, title: "Complete task", content: "complete task fast"}
-	   	err = updateTaskById(dbpool, 3, changedTask) */
+	//Получить список задач по метке,
+	tasksByLabel, err := getTasksByLabel(dbpool, "Bug")
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(tasksByLabel)
 
-	//Удалять задачу по id.
+	//Обновить задачу по id,
+	changedTask := task{author_id: 1, assigned_id: 1, title: "Complete task", content: "complete task fast"}
+	err = updateTaskById(dbpool, 3, changedTask)
+
+	//Удалить задачу по id.
 	err = deleteTaskById(dbpool, 7)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("Success")
 
-	// Добавление данных
-	/*	data := []user{
-				{name: "Ivan Ivanov"},
-				{name: "Semen Semenov"},
-			}
-		 	err = addUsers(dbpool, data)
-			if err != nil {
-				log.Fatal(err)
-			} */
-	// Запрос данных
-	/* 	users, err := getUsers(dbpool)
-	   	if err != nil {
-	   		log.Fatal(err)
-	   	}
-	   	fmt.Println(users) */
-
-	//Удалять задачу по id.
-}
-
-func addUsers(db *pgxpool.Pool, users []user) error {
-	_, err := db.Exec(ctx, `
-		CREATE TABLE IF NOT EXISTS users (
-		    id SERIAL PRIMARY KEY,
-    		name TEXT NOT NULL
-		);
-	`)
-	if err != nil {
-		return err
-	}
-	for _, u := range users {
-		_, err := db.Exec(ctx, `
-		INSERT INTO users (name)
-		VALUES ($1);
-		`,
-			u.name,
-		)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 func addTasks(db *pgxpool.Pool, tasks []task) error {
@@ -153,29 +119,6 @@ func addTasks(db *pgxpool.Pool, tasks []task) error {
 		}
 	}
 	return nil
-}
-
-func getUsers(db *pgxpool.Pool) ([]user, error) {
-	rows, err := db.Query(ctx, `
-		SELECT * FROM users ORDER BY id;
-	`)
-	if err != nil {
-		return nil, err
-	}
-	var users []user
-	for rows.Next() {
-		var u user
-		err = rows.Scan(
-			&u.id,
-			&u.name,
-		)
-		if err != nil {
-			return nil, err
-		}
-		users = append(users, u)
-
-	}
-	return users, rows.Err()
 }
 
 func getTasks(db *pgxpool.Pool) ([]task, error) {
